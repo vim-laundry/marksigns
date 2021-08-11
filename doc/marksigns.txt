@@ -1,0 +1,116 @@
+*marksigns.txt* marksigns
+
+
+MARKSIGNS - TABLE OF CONTENTS                                  *marksigns.vim*
+==============================================================================
+
+  Introduction.......................................|marksigns-introduction|
+  Usage..............................................|marksigns-usage|
+  Commands...........................................|marksigns-commands|
+  Mappings...........................................|marksigns-mappings|
+  Plugs..............................................|marksigns-plugs|
+  Remarks............................................|marksigns-remarks|
+
+
+
+INTRODUCTION                                          *marksigns-introduction*
+==============================================================================
+
+This plugin is meant to be an uncomplicated alternative to |vim-signature|,
+a popular plugin that shows marks in the |signs| column.
+
+This plugin will only show lowercase/uppercase |marks|, and will not interfere
+in any way with the |viminfo| or |shada| files.
+
+It makes use of timers to only update the sign column when it's safe to do it,
+to avoid performance problems or UI stutterings.
+
+
+
+
+USAGE                                                        *marksigns-usage*
+==============================================================================
+
+  Use the provided mappings/commands/<Plugs>.
+
+  The plugin is automatically enabled at start unless you set:
+>
+    let g:marksigns_enable_at_start = 0
+<
+
+
+
+COMMANDS                                                  *marksigns-commands*
+==============================================================================
+                                                                       *:Mark*
+  Mark[!] [mark]~
+
+    Add [mark], or delete it with <bang>.
+
+                                                                      *:Marks*
+  Marks [type]~
+
+    List all marks.
+    If [type] is a lowercase letter, list only local marks.
+    If [type] is an uppercase letter, list only global marks.
+    If [type] is a number > 0, list numbered marks.
+    You can select a mark from the list and jump to it.
+
+                                                                  *:Marksigns*
+  Marksigns[!]~
+
+    Toggle the signs visibility, or force disable (with <bang>).
+
+
+
+
+MAPPINGS                                                  *marksigns-mappings*
+==============================================================================
+
+  Mappings can be disabled by setting:
+>
+    let g:marksigns_mappings = 0
+<
+  Default mappings:
+
+    m [letter]    place mark [letter]
+    dm [letter]   delete mark [letter]
+    m?            list all letter marks
+    m<Tab>        list lowercase (local) marks
+    m<S-Tab>      list uppercase (global) marks
+    1m<Tab>       list numbered marks
+
+  To go to next/previous local mark you can use |[`|, |]`|.
+
+
+
+
+PLUGS                                                        *marksigns-plugs*
+==============================================================================
+
+  To enable <Plug>s (disabled by default):
+>
+    let g:marksigns_plugs = 1
+<
+  List of plugs:
+
+    <Plug>(Mark)             place mark [letter]
+    <Plug>(MarkDelete)       delete mark [letter]
+    <Plug>(MarksAll)         list all letter marks
+    <Plug>(MarksLocal)       list lowercase (local) marks
+    <Plug>(MarksGlobal)      list uppercase (global) marks
+    <Plug>(MarksNumbered)    list numbered marks
+
+
+
+REMARKS                                                    *marksigns-remarks*
+==============================================================================
+
+  Deleting marks is kind of useless, unless vim can delete these marks also
+  from the |viminfo| file... at the time of writing, recent versions of vim
+  can do it, nvim still cannot.
+
+
+
+==============================================================================
+vim:tw=78:ft=help:norl:et:fen:fdl=0:
