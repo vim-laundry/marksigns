@@ -279,7 +279,7 @@ endfun "}}}
 
 fun! s:Signs.add_mark(mark) abort
   " Add a mark, and relative sign. {{{1
-  exe 'mark' a:mark
+  exe 'normal! m' . a:mark
   if a:mark =~ '[A-Z]'
     call s:update_all_windows()
   else
