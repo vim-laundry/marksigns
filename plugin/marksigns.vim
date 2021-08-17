@@ -140,7 +140,7 @@ fun! s:list_marks(arg) abort
   endfor
   let c = nr2char(getchar())
   call feedkeys("\<CR>")
-  if index(b:mark_signs.valid, c) >= 0
+  if index(b:mark_signs.valid, c) >= 0 || c =~ '\d'
     exe "normal! '".c.'zvzz'
   endif
 endfun "}}}
