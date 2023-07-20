@@ -15,25 +15,23 @@
 "------------------------------------------------------------------------------
 " Mark:        m,  dm   add a mark, or delete it (BANG)
 " Marks:       m<Tab>   list lowercase letter marks
+"                       with <count>, display also numeric
 "              m<S-Tab> list uppercase letter marks
-"              m?       list all letter marks
-"                       with <count> (eg. 1m?), display numbers, not letters
+"                       with <count>, display also numeric
+"              m?       list all alphanumeric marks
 " Marksigns:            toggle the signs visibility, or force disable (BANG)
 
 " Option:               g:marksigns_enable_at_start (default 1)
 "------------------------------------------------------------------------------
 
 " GUARD {{{1
-if !has('signs') || !has('timers')
-  finish
-endif
-
-if exists('g:loaded_marksigns')
+if !has('signs') || !has('timers') || exists('g:loaded_marksigns')
   finish
 endif
 let g:loaded_marksigns = 1
 
 let s:enabled = get(g:, 'marksigns_enable_at_start', 1)
+let s:write_shada = 0
 
 
 " Preserve external compatibility options, then enable full vim compatibility
@@ -47,6 +45,7 @@ augroup marksigns
   au BufEnter *                let s:ready = 1 | call s:update_buffer(0)
   au SessionLoadPost *         call s:update_buffer(0)
   au ColorScheme *             call s:higroup()
+  au VimLeave *                call s:wshada()
 augroup END
 
 command! -bang -nargs=? Mark      call s:add_or_delete_mark(<bang>0, <q-args>)
@@ -56,9 +55,9 @@ command! -bang          Marksigns call s:toggle(<bang>0)
 if get(g:, 'marksigns_mappings', 1)
   nnoremap <silent> m        :Mark<cr>
   nnoremap <silent> dm       :Mark!<cr>
-  nnoremap <silent> m<tab>   :<c-u>Marks <C-r>=v:count<CR> a<cr>
-  nnoremap <silent> m<s-tab> :<c-u>Marks <C-r>=v:count<CR> A<cr>
-  nnoremap <silent> m?       :<c-u>Marks <C-r>=v:count<CR><cr>
+  nnoremap <silent> m<tab>   :<c-u>Marks <C-r>=v:count?"0a":"a"<CR><cr>
+  nnoremap <silent> m<s-tab> :<c-u>Marks <C-r>=v:count?"0A":"A"<CR><cr>
+  nnoremap <silent> m?       :<c-u>Marks<cr>
 endif
 
 if get(g:, 'marksigns_plugs', 0)
@@ -124,6 +123,7 @@ fun! s:add_or_delete_mark(delete, mark) abort
   else
     call b:mark_signs.add_mark(mark)
   endif
+  silent doautocmd <nomodeline> User MarkChanged
 endfun "}}}
 
 fun! s:list_marks(arg) abort
@@ -132,10 +132,16 @@ fun! s:list_marks(arg) abort
   echohl Title
   echo marks[0]
   echohl None
-  let pat = str2nr(a:arg) ? '''[0-9]'''
-        \ : a:arg =~# '[a-z]' ? '''[a-z]'''
-        \ : a:arg =~# '[A-Z]' ? '''[A-Z]''' : '''[a-zA-Z]'''
-  for m in sort(filter(marks, 'v:val[1] =~# '.pat)[1:] + ['> '])
+  let pat = '['
+  if a:arg !~ '\S'
+    let pat .= 'a-zA-Z0-9'
+  else
+    if a:arg =~# '[0-9]' | let pat .= '0-9' | endif
+    if a:arg =~# '[a-z]' | let pat .= 'a-z' | endif
+    if a:arg =~# '[A-Z]' | let pat .= 'A-Z' | endif
+  endif
+  let pat .= ']'
+  for m in sort(filter(marks, 'v:val[1] =~# "' . pat . '"')[1:] + ['> '])
     echo m
   endfor
   let c = nr2char(getchar())
@@ -156,7 +162,9 @@ fun! s:update_all_windows() abort
   let curwin = winnr()
   for w in range(winnr('$'))
     noautocmd exe (w+1).'wincmd w'
-    call b:mark_signs.update_all()
+    if exists('b:mark_signs')
+      call b:mark_signs.update_all()
+    endif
   endfor
   exe curwin . 'wincmd w'
 endfun "}}}
@@ -272,6 +280,7 @@ fun! s:Signs.delete_mark(mark) abort
     else
       call self.remove_sign(a:mark)
     endif
+    let s:write_shada = has('nvim')
   else
     call s:warn('Mark '.a:mark.' not defined')
   endif
@@ -307,7 +316,7 @@ fun! s:higroup() abort
   let mode = gui ? 'gui' : 'cterm'
   let hi   = synIDattr(synIDtrans(hlID('SignColumn')), 'bg', mode)
   let color = empty(hi) || hi == -1 ? mode.'bg=NONE' : mode.'bg='.hi
-  exe 'silent! hi! MarkBar guifg=Red ctermfg=9' color
+  exe 'silent! hi default MarkBar guifg=#ff0000 ctermfg=9' color
 endfun "}}}
 
 fun! s:start_timer() abort
@@ -317,6 +326,13 @@ fun! s:start_timer() abort
   if !s:ready | return | endif
   let s:ready = 0
   call timer_start(500, { t -> s:update_buffer(0) })
+endfun "}}}
+
+fun! s:wshada() abort
+  " Write nvim shada file, so that marks are updated. {{{1
+  if s:write_shada
+    silent! wshada!
+  endif
 endfun "}}}
 
 "------------------------------------------------------------------------------
@@ -382,3 +398,4 @@ unlet s:save_cpo
 "}}}
 
 " vim: et sw=2 ts=2 sts=2 fdm=marker
+
